@@ -1,5 +1,5 @@
 ﻿# Nome do nosso workflow, que aparecerá no separador "Actions" do GitHub
-name: CI/CD - Build, Teste, Push e Deploy da Aplicação
+name: CI/CD - Build, Teste, Push e Deploy Simulado
 
 # Define o gatilho (trigger) para este workflow.
 on:
@@ -47,38 +47,24 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/conformitrain-api:latest
 
-  # Trabalho 3: Fazer o deploy da nova imagem no ambiente de Staging
+  # Trabalho 3: Simular o deploy da nova imagem no ambiente de Staging
   deploy-staging:
     runs-on: ubuntu-latest
     needs: build-and-push
+    environment:
+      name: staging
     steps:
-      - name: Deploy para o servidor de Staging
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.STAGING_HOST }}
-          username: ${{ secrets.STAGING_USERNAME }}
-          key: ${{ secrets.STAGING_SSH_KEY }}
-          script: |
-            cd /home/gcostadev/conformitrain
-            docker-compose pull
-            docker-compose up -d
+      - name: Simular deploy para Staging
+        run: echo "Deploy para Staging concluído com sucesso!"
 
-  # Trabalho 4: Fazer o deploy da nova imagem no ambiente de Produção
+  # Trabalho 4: Simular o deploy da nova imagem no ambiente de Produção
   deploy-production:
     runs-on: ubuntu-latest
     needs: deploy-staging
-    # Adiciona um ambiente e um passo de aprovação manual no GitHub Actions
     environment:
       name: production
     steps:
-      - name: Deploy para o servidor de Produção
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.PRODUCTION_HOST }}
-          username: ${{ secrets.PRODUCTION_USERNAME }}
-          key: ${{ secrets.PRODUCTION_SSH_KEY }}
-          script: |
-            cd /home/gcostadev/conformitrain-prod
-            docker-compose pull
-            docker-compose up -d
+      - name: Simular deploy para Produção
+        run: echo "Deploy para Produção aprovado e concluído com sucesso!" 
+
             
