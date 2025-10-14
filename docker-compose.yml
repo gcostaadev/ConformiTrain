@@ -1,0 +1,55 @@
+﻿ # Define a versão do docker-compose a ser usada
+version: '3.8'
+
+# Define os serviços (containers) que compõem nossa aplicação
+services:
+  # 1. Serviço da nossa API em C#
+  conformitrain-api:
+    container_name: conformitrain-api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      # Connection String para Oracle, lendo a senha do arquivo .env
+      - "ConnectionStrings__DefaultConnection=User Id=app;Password=${DB_PASSWORD};Data Source=db:1521/FREEPDB1;"
+    depends_on:
+      # A API só iniciará depois que o container do banco estiver saudável
+      db:
+        condition: service_healthy
+    networks:
+      - conformitrain-network
+
+  # 2. Serviço do Banco de Dados Oracle
+  db:
+    container_name: conformitrain-db
+    image: "gvenzl/oracle-free"
+    ports:
+      # Expõe a porta padrão do Oracle para a sua máquina
+      - "1521:1521"
+    environment:
+      # Define a senha para os usuários do Oracle, usando o valor do .env
+      - ORACLE_PASSWORD=${DB_PASSWORD}
+    volumes:
+      # Cria um volume para persistir os dados do banco Oracle
+      - oracledata:/opt/oracle/oradata
+    networks:
+      - conformitrain-network
+    # Verificação que garante que o banco está pronto para aceitar conexões
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+# Define o volume de dados para o banco Oracle
+volumes:
+  oracledata:
+
+# Define a rede para a comunicação entre os containers
+networks:
+  conformitrain-network:
+    driver: bridge
