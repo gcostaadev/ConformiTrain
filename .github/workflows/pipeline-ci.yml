@@ -70,7 +70,6 @@ jobs:
     # Adiciona um ambiente e um passo de aprovação manual no GitHub Actions
     environment:
       name: production
-      url: http://${{ secrets.PRODUCTION_HOST }}
     steps:
       - name: Deploy para o servidor de Produção
         uses: appleboy/ssh-action@master
@@ -82,3 +81,4 @@ jobs:
             cd /home/gcostadev/conformitrain-prod
             docker-compose pull
             docker-compose up -d
+            
