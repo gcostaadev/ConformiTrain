@@ -43,3 +43,27 @@ jobs:
           push: true
           # A tag da imagem será o seu username/nome-do-repositorio:latest
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/conformitrain-api:latest
+
+  # Trabalho 2: Fazer o deploy da nova imagem no ambiente de Staging
+  deploy-staging:
+    # O tipo de máquina virtual que o nosso trabalho vai usar.
+    runs-on: ubuntu-latest
+    # Este trabalho só será executado se o trabalho 'build-and-push' for bem-sucedido.
+    needs: build-and-push
+
+    # Os passos para o deploy.
+    steps:
+      - name: Deploy para o servidor de Staging
+        # Usa uma "action" da comunidade para executar comandos num servidor remoto via SSH.
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USERNAME }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          script: |
+            # Navega para a pasta da aplicação no servidor
+            cd /home/ubuntu/conformitrain
+            # Faz o download da imagem mais recente do Docker Hub
+            docker-compose pull
+            # Reinicia os contentores, aplicando a nova imagem
+            docker-compose up -d
