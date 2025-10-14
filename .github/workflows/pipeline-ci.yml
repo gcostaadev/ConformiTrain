@@ -1,69 +1,84 @@
 ﻿# Nome do nosso workflow, que aparecerá no separador "Actions" do GitHub
-name: CI - Build e Push da Imagem Docker
+name: CI/CD - Build, Teste, Push e Deploy da Aplicação
 
 # Define o gatilho (trigger) para este workflow.
-# Ele será executado a cada push na branch 'main'.
 on:
   push:
     branches: [ "main" ]
 
 # Define os trabalhos (jobs) que serão executados.
 jobs:
-  # O nosso único trabalho, por agora, é construir a imagem e publicá-la.
-  build-and-push:
-    # O tipo de máquina virtual que o nosso trabalho vai usar.
+  # Trabalho 1: Executar os testes da aplicação
+  test:
     runs-on: ubuntu-latest
-
-    # Os passos que compõem o nosso trabalho.
     steps:
-      # 1. Faz o checkout do código do repositório para a máquina virtual.
       - name: Checkout do código
         uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Restaurar dependências
+        run: dotnet restore
+      - name: Executar testes
+        run: dotnet test --no-restore --verbosity normal
 
-      # 2. Configura o QEMU, necessário para construir imagens para múltiplas arquiteturas.
+  # Trabalho 2: Construir a imagem e publicá-la no Docker Hub
+  build-and-push:
+    runs-on: ubuntu-latest
+    # Este trabalho só será executado se os testes passarem
+    needs: test
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
-
-      # 3. Configura o Docker Buildx, uma extensão que nos dá mais funcionalidades de build.
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      # 4. Faz o login no Docker Hub usando os segredos que configurámos.
       - name: Login no Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      # 5. Constrói a imagem Docker a partir do nosso Dockerfile e envia-a (push) para o Docker Hub.
       - name: Build e push da imagem
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          # A tag da imagem será o seu username/nome-do-repositorio:latest
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/conformitrain-api:latest
 
-  # Trabalho 2: Fazer o deploy da nova imagem no ambiente de Staging
+  # Trabalho 3: Fazer o deploy da nova imagem no ambiente de Staging
   deploy-staging:
-    # O tipo de máquina virtual que o nosso trabalho vai usar.
     runs-on: ubuntu-latest
-    # Este trabalho só será executado se o trabalho 'build-and-push' for bem-sucedido.
     needs: build-and-push
-
-    # Os passos para o deploy.
     steps:
       - name: Deploy para o servidor de Staging
-        # Usa uma "action" da comunidade para executar comandos num servidor remoto via SSH.
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.STAGING_HOST }}
           username: ${{ secrets.STAGING_USERNAME }}
           key: ${{ secrets.STAGING_SSH_KEY }}
           script: |
-            # Navega para a pasta da aplicação no servidor
-            cd /home/ubuntu/conformitrain
-            # Faz o download da imagem mais recente do Docker Hub
+            cd /home/gcostadev/conformitrain
             docker-compose pull
-            # Reinicia os contentores, aplicando a nova imagem
+            docker-compose up -d
+
+  # Trabalho 4: Fazer o deploy da nova imagem no ambiente de Produção
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    # Adiciona um ambiente e um passo de aprovação manual no GitHub Actions
+    environment:
+      name: production
+      url: http://${{ secrets.PRODUCTION_HOST }}
+    steps:
+      - name: Deploy para o servidor de Produção
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USERNAME }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          script: |
+            cd /home/gcostadev/conformitrain-prod
+            docker-compose pull
             docker-compose up -d
