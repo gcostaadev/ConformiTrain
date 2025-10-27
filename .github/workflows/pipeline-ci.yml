@@ -1,5 +1,5 @@
 ﻿# Nome do nosso workflow, que aparecerá no separador "Actions" do GitHub
-name: CI/CD - Build, Teste, Push e Deploy Simulado
+name: CI/CD - Build, Teste BDD, Push e Deploy Simulado
 
 # Define o gatilho (trigger) para este workflow.
 on:
@@ -8,24 +8,25 @@ on:
 
 # Define os trabalhos (jobs) que serão executados.
 jobs:
-  # Trabalho 1: Executar os testes de API (BDD) com Docker Compose
+  # Trabalho 1: Executar os testes de integração BDD
   test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
 
-      # O docker-compose precisa do .env para a senha do banco
-      - name: Criar arquivo .env
+      # [NOVO PASSO] Instala o Docker Compose v2
+      - name: Instalar Docker Compose
         run: |
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" > .env
+          sudo apt-get update
+          sudo apt-get install -y docker-compose-plugin
 
-      # Executa o serviço 'test-runner' do docker-compose.
-      # O --build garante que as imagens (API e Teste) sejam construídas.
-      # O docker-compose irá automaticamente subir as dependências (db e conformitrain-api).
-      # Se os testes BDD falharem, este passo falhará, interrompendo o pipeline.
+      - name: Criar arquivo .env para Docker Compose
+        run: echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" > .env
+
       - name: Executar testes de integração BDD
-        run: docker-compose run --build test-runner
+        # Usamos 'docker compose' (v2) em vez de 'docker-compose' (v1)
+        run: docker compose run --build test-runner
 
   # Trabalho 2: Construir a imagem e publicá-la no Docker Hub
   build-and-push:
@@ -47,7 +48,8 @@ jobs:
       - name: Build e push da imagem
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: . # Contexto é a raiz da solução
+          file: ./ConformiTrain/Dockerfile # Aponta para o Dockerfile da API
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/conformitrain-api:latest
 
@@ -70,4 +72,5 @@ jobs:
     steps:
       - name: Simular deploy para Produção
         run: echo "Deploy para Produção aprovado e concluído com sucesso!"
+
             
