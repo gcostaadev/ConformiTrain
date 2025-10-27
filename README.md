@@ -143,6 +143,89 @@ ENTRYPOINT ["dotnet", "ConformiTrain.dll"]
 | 📚 Documentação técnica (PDF/PPT) | ☑️ |
 | 🚀 Deploy realizado em staging e produção | ☑️ |
 
+## 🧪 Como Configurar e Executar os Testes BDD Localmente
+
+O projeto inclui um conjunto de testes de API automatizados usando BDD (SpecFlow) que validam os principais endpoints da API.
+
+Configuração:
+Verifique o Projeto de Teste: Certifique-se de que o projeto ConformiTrain.Tests.API existe dentro da sua Solução (.sln).
+
+Confirme os Ficheiros: Verifique se este projeto contém:
+
+A pasta Features com o ficheiro Funcionario.feature.
+
+A pasta StepDefinitions com o ficheiro FuncionarioSteps.cs.
+
+O ficheiro Dockerfile na raiz do projeto ConformiTrain.Tests.API.
+
+Instale os Pacotes NuGet: Confirme que os seguintes pacotes NuGet estão instalados no projeto ConformiTrain.Tests.API:
+
+SpecFlow.xUnit
+
+SpecFlow.Tools.MsBuild.Generation
+
+RestSharp
+
+FluentAssertions
+
+NJsonSchema
+
+Execução:
+Pré-requisito: Certifique-se de que nenhum contentor do projeto ConformiTrain esteja a rodar. Se tiver dúvidas, execute docker-compose down no terminal antes de prosseguir.
+
+Abra um Terminal: Navegue até à pasta raiz da sua Solução (o mesmo local onde se encontra o seu ficheiro docker-compose.yml principal).
+
+Execute o Comando: Digite o seguinte comando e pressione Enter: docker-compose run --build test-runner
+
+Com certeza! Aqui estão as instruções concisas para configurar e executar os seus testes BDD, prontas para adicionar ao seu README.md:
+
+🧪 Como Configurar e Executar os Testes BDD Localmente
+O projeto inclui um conjunto de testes de API automatizados usando BDD (SpecFlow) que validam os principais endpoints da API.
+
+Configuração:
+Verifique o Projeto de Teste: Certifique-se de que o projeto ConformiTrain.Tests.API existe dentro da sua Solução (.sln).
+
+Confirme os Ficheiros: Verifique se este projeto contém:
+
+A pasta Features com o ficheiro Funcionario.feature.
+
+A pasta StepDefinitions com o ficheiro FuncionarioSteps.cs.
+
+O ficheiro Dockerfile na raiz do projeto ConformiTrain.Tests.API.
+
+Instale os Pacotes NuGet: Confirme que os seguintes pacotes NuGet estão instalados no projeto ConformiTrain.Tests.API:
+
+SpecFlow.xUnit
+
+SpecFlow.Tools.MsBuild.Generation
+
+RestSharp
+
+FluentAssertions
+
+NJsonSchema
+
+Execução:
+Pré-requisito: Certifique-se de que nenhum contentor do projeto ConformiTrain esteja a rodar. Se tiver dúvidas, execute docker-compose down no terminal antes de prosseguir.
+
+Abra um Terminal: Navegue até à pasta raiz da sua Solução (o mesmo local onde se encontra o seu ficheiro docker-compose.yml principal).
+
+Execute o Comando: Digite o seguinte comando e pressione Enter:
+
+Bash
+
+docker-compose run --build test-runner
+O que este comando faz:
+
+Constrói (ou reconstrói, se necessário) as imagens Docker da sua API e do executor de testes (test-runner).
+
+Inicia os contentores da API e do Banco de Dados Oracle.
+
+Executa o contentor test-runner, que irá fazer as chamadas HTTP para a API e validar as respostas de acordo com os cenários definidos no Funcionario.feature.
+
+Exibe o resultado detalhado dos testes (Passou/Falhou) diretamente no seu terminal.
+
+
 
 
 

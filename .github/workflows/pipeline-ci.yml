@@ -8,20 +8,24 @@ on:
 
 # Define os trabalhos (jobs) que serão executados.
 jobs:
-  # Trabalho 1: Executar os testes da aplicação
+  # Trabalho 1: Executar os testes de API (BDD) com Docker Compose
   test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0.x'
-      - name: Restaurar dependências
-        run: dotnet restore
-      - name: Executar testes
-        run: dotnet test --no-restore --verbosity normal
+
+      # O docker-compose precisa do .env para a senha do banco
+      - name: Criar arquivo .env
+        run: |
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" > .env
+
+      # Executa o serviço 'test-runner' do docker-compose.
+      # O --build garante que as imagens (API e Teste) sejam construídas.
+      # O docker-compose irá automaticamente subir as dependências (db e conformitrain-api).
+      # Se os testes BDD falharem, este passo falhará, interrompendo o pipeline.
+      - name: Executar testes de integração BDD
+        run: docker-compose run --build test-runner
 
   # Trabalho 2: Construir a imagem e publicá-la no Docker Hub
   build-and-push:
@@ -65,6 +69,5 @@ jobs:
       name: production
     steps:
       - name: Simular deploy para Produção
-        run: echo "Deploy para Produção aprovado e concluído com sucesso!" 
-
+        run: echo "Deploy para Produção aprovado e concluído com sucesso!"
             

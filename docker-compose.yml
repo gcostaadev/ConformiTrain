@@ -7,6 +7,7 @@ services:
   conformitrain-api:
     container_name: conformitrain-api
     build:
+      # Contexto é a pasta atual (.), onde este docker-compose.yml está.
       context: .
       dockerfile: Dockerfile
     ports:
@@ -14,8 +15,8 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
-      # Connection String para Oracle, lendo a senha do arquivo .env
-      - "ConnectionStrings__DefaultConnection=User Id=app;Password=${DB_PASSWORD};Data Source=db:1521/FREEPDB1;"
+      # [CORREÇÃO] Alterado "User Id=app" para "User Id=SYSTEM"
+      - "ConnectionStrings__DefaultConnection=User Id=SYSTEM;Password=${DB_PASSWORD};Data Source=db:1521/FREEPDB1;"
     depends_on:
       # A API só iniciará depois que o container do banco estiver saudável
       db:
@@ -49,16 +50,17 @@ services:
   test-runner:
     container_name: test-runner
     build:
-      # O contexto é a pasta do projeto de teste
-      context: ./ConformiTrain.Tests.API
-      dockerfile: Dockerfile # O Dockerfile que está dentro dessa pasta
+      # Sobe um nível (../) para a raiz da Solução,
+      # e depois entra na pasta de testes
+      context: ../ConformiTrain.Tests.API
+      dockerfile: Dockerfile
     environment:
       # URL interna da API para os testes, acessível pela rede do Docker
       - API_BASE_URL=http://conformitrain-api:8080
     depends_on:
       # Garante que a API e o DB estão prontos antes de rodar os testes
       conformitrain-api:
-        condition: service_started 
+        condition: service_started
       db:
         condition: service_healthy
     networks:
