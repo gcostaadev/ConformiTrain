@@ -1,4 +1,4 @@
-﻿ # Define a versão do docker-compose a ser usada
+﻿# Define a versão do docker-compose a ser usada
 version: '3.8'
 
 # Define os serviços (containers) que compõem nossa aplicação
@@ -44,6 +44,25 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+
+  # 3. Serviço do Test Runner (BDD)
+  test-runner:
+    container_name: test-runner
+    build:
+      # O contexto é a pasta do projeto de teste
+      context: ./ConformiTrain.Tests.API
+      dockerfile: Dockerfile # O Dockerfile que está dentro dessa pasta
+    environment:
+      # URL interna da API para os testes, acessível pela rede do Docker
+      - API_BASE_URL=http://conformitrain-api:8080
+    depends_on:
+      # Garante que a API e o DB estão prontos antes de rodar os testes
+      conformitrain-api:
+        condition: service_started 
+      db:
+        condition: service_healthy
+    networks:
+      - conformitrain-network
 
 # Define o volume de dados para o banco Oracle
 volumes:
